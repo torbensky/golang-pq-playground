@@ -35,6 +35,28 @@ func main() {
 
 	squirrel_sqlx_selectBasicStructScanExample(db)
 	sqlx_joinExample(db)
+	sqlx_joinWhereExample(db)
+}
+
+func sqlx_joinWhereExample(db *sqlx.DB) {
+	query := `SELECT 
+		things.*,
+		users.id "user.id",
+		users.name "user.name"	
+	FROM
+		user_things things JOIN users ON things.user_id = users.id
+	WHERE
+		users.id = $1;`
+
+	rows, err := db.Queryx(query, 1)
+	must(err)
+	defer rows.Close()
+
+	var utv UserThingView
+	for rows.Next() {
+		must(rows.StructScan(&utv))
+		fmt.Println(utv)
+	}
 }
 
 func sqlx_joinExample(db *sqlx.DB) {
