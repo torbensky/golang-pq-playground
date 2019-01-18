@@ -23,8 +23,8 @@ type User struct {
 }
 
 type UserThingView struct {
-	User
-	Things []Thing `db:"things"`
+	User User `db:"user"`
+	Thing
 }
 
 func main() {
@@ -33,6 +33,30 @@ func main() {
 	defer db.Close()
 	must(db.Ping())
 
+	squirrel_sqlx_selectBasicStructScanExample(db)
+	sqlx_joinExample(db)
+}
+
+func sqlx_joinExample(db *sqlx.DB) {
+	query := `SELECT 
+		things.*,
+		users.id "user.id",
+		users.name "user.name"
+	FROM
+		user_things things JOIN users ON things.user_id = users.id;`
+
+	rows, err := db.Queryx(query)
+	must(err)
+	defer rows.Close()
+
+	var utv UserThingView
+	for rows.Next() {
+		must(rows.StructScan(&utv))
+		fmt.Println(utv)
+	}
+}
+
+func squirrel_sqlx_selectBasicStructScanExample(db *sqlx.DB) {
 	query, _ := sq.Select("*").
 		From("users").
 		MustSql()
