@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -11,10 +13,28 @@ import (
 var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 type Thing struct {
-	ID          int    `db:"thing_id"`
-	UserID      int    `db:"user_id"`
-	Type        string `db:"type"`
-	Description string `db:"description"`
+	ID          int            `db:"thing_id"`
+	UserID      int            `db:"user_id"`
+	Type        string         `db:"type"`
+	Description sql.NullString `db:"description"`
+	Map         StringMap      `db:"map"`
+}
+
+type StringMap map[string]string
+
+func (stringMap *StringMap) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+
+	// Should be some type of string, which is castable to byte slice
+	val, ok := src.([]byte)
+	if !ok {
+		// not a string type
+		return fmt.Errorf("unable to scan")
+	}
+
+	return json.Unmarshal(val, stringMap)
 }
 
 type User struct {
